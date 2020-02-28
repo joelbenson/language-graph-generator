@@ -8,7 +8,7 @@ import networkx as nx
 def main():
 
     MAX_FILE_SIZE_GB = 5
-    CORPUS_PATH = "OANC-GrAF"
+    CORPUS_PATH = "test_corpus"
 
     #Initialize language graph and directory to save it to
     G = nx.MultiGraph([])
