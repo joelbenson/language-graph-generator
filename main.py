@@ -1,14 +1,16 @@
 from fileUtils import getTextFiles
 from textUtils import getSentences, getWords
+from languageGraphUtils import save_lg, read_lg
 from itertools import combinations
 import matplotlib.pyplot as plt
 import os
 import networkx as nx
+import time
 
 def main():
 
-    MAX_FILE_SIZE_GB = 5
-    CORPUS_PATH = "test_corpus"
+    CORPUS_PATH = "OANC-GrAF"
+    PLOT_WORD_ACQUISITION = True
 
     #Initialize language graph and directory to save it to
     G = nx.MultiGraph([])
@@ -16,8 +18,8 @@ def main():
     if not os.path.exists("graphs"):
         os.makedirs("graphs")
 
-    graph_file_path = "graphs/%s_language_graph.gml" % CORPUS_PATH
-    nx.write_gml(G, graph_file_path)
+    graph_file_path = "graphs/%s.lg" % CORPUS_PATH
+    save_lg(G, graph_file_path)
 
     #Get .txt file paths recursively from corpora folder
     text_files = getTextFiles(CORPUS_PATH)
@@ -67,30 +69,27 @@ def main():
                     prev_count = edge_data["count"]
                     G.add_edge(w1, w2, key="co-occurance", count=prev_count + 1)
 
-        #Save language graph file and check for maximum file size
-        if (os.path.getsize(graph_file_path) > MAX_FILE_SIZE_GB*1000000000):
-            print("Saving and quitting: Maximum file size reached.")
-            break
 
-        #Every once in a while, save graph and display word acquisition trend
+        #Save word acquisition trend
         num_words.append(len(G.nodes))
-        if (i % 250 == 0):
-            #Save graph
-            print("Saving graph...")
-            nx.write_gml(G, graph_file_path)
-            print("Current file size:", os.path.getsize(graph_file_path)/1000000000, "GB")
 
-            #Plot word count
-            plt.title("Word Acquisition")
-            plt.xlabel("Files Scanned")
-            plt.ylabel("Words in Graph")
-            plt.xlim(0, i)
-            plt.ylim(0,len(G.nodes))
-            plt.plot(range(i), num_words)
-            plt.show()
 
-    #Save and exit
-    nx.write_gml(G, graph_file_path)
+    #Save graph
+    print("Saving graph...")
+    start = time.time()
+    save_lg(G, graph_file_path)
+    end = time.time()
+    print(end - start, "seconds to save graph. Expect a similar amount of time for loading graph.")
+
+    #Plot word acquisition trend
+    if (PLOT_WORD_ACQUISITION):
+        plt.title("Word Acquisition")
+        plt.xlabel("Files Scanned")
+        plt.ylabel("Words in Graph")
+        plt.xlim(0, i)
+        plt.ylim(0,len(G.nodes))
+        plt.plot(range(i), num_words)
+        plt.show()
 
     return 0
 
